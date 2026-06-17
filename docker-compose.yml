@@ -1,0 +1,99 @@
+version: '3.8'
+
+services:
+  # 若別的專案已開啟 Ollama 服務，就不須重複開啟 (會擠 Ollama 11434 port)，獨立執行時再 compose 就好
+  # 1. Ollama 模型服務
+  # ollama:
+  #   image: ollama/ollama
+  #   container_name: speech_rag_ollama
+  #   ports:
+  #     - "11434:11434"
+  #   volumes:  
+  #     - ollama_data:/root/.ollama
+  #   restart: unless-stopped
+  #   deploy:
+  #     resources:
+  #       limits:
+  #         memory: 3.5G
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "ollama list || exit 1"]
+  #     interval: 5s
+  #     timeout: 5s
+  #     retries: 5
+
+
+  # 2. Redis 服務
+  redis:
+    image: redis:7-alpine
+    container_name: speech_rag_redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  # 3. FastAPI 後端服務
+  web:
+    build: .
+    container_name: speech_rag_web
+    ports:
+      - "8002:8002"
+    env_file:                                   # 設定檔是給本地端執行的
+      - .env
+    environment:                                # 環境給 Docker 執行的, 由 Docker中的 redis://redis 對接
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_BACKEND_URL=redis://redis:6379/0
+      # 若 Docker中別的專案已開啟 Ollama 服務，使用 host.docker.internal 來訪問主機上的 Ollama
+      - OLLAMA_HOST=http://host.docker.internal:11434
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./uploaded_audio:/app/uploaded_audio
+      - ./chroma_langchain_db:/app/chroma_langchain_db
+      - ./file_status_db:/app/file_status_db
+      - ./transcripts:/app/transcripts
+    depends_on:
+      # ollama:
+      #   condition: service_healthy
+      redis:
+        condition: service_started
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1.5G
+
+  # 4. Celery 背景 Worker 服務
+  worker:
+    build: .
+    container_name: speech_rag_worker
+    # 啟動指令：讓 Celery 去抓 app.celery_app 裡面的 celery 實例
+    command: celery -A app.celery_app.celery worker --loglevel=info -P threads
+    env_file:
+      - .env
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_BACKEND_URL=redis://redis:6379/0
+      - OLLAMA_HOST=http://host.docker.internal:11434
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./uploaded_audio:/app/uploaded_audio
+      - ./chroma_langchain_db:/app/chroma_langchain_db
+      - ./file_status_db:/app/file_status_db
+      - ./transcripts:/app/transcripts
+    depends_on:
+      # ollama:
+      #   condition: service_healthy
+      redis:
+        condition: service_started
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 2.5G
+
+volumes:
+  ollama_data:
