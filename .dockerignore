@@ -1,0 +1,10 @@
+__pycache__
+.git
+.gitignore
+.env
+chroma_langchain_db
+uploaded_audio
+transcripts
+file_status_db
+LICENSE
+README.md

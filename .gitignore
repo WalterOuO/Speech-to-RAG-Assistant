@@ -1,2 +1,8 @@
 __pycache__
 .env
+chroma_langchain_db/**/*
+transcripts/**/*
+uploaded_audio/**/*
+file_status_db/**/*
+
+!**/.gitkeep
