@@ -14,7 +14,10 @@ class QueryRequest(BaseModel):
     question: str
     top_k: int
     
-
+class Source(BaseModel):
+    filename: str
+    chunk: int
+    
 class QueryResponse(BaseModel):
     filename: str
     question: str
