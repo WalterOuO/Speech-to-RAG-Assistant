@@ -1,7 +1,7 @@
 # Speech-to-RAG Assistant  
 ### (FastAPI + Whisper + RAG + Celery + Redis + ChromaDB + Ollama)
 
-一個完整的 **語音轉文字 + 向量檢檢索增強生成（RAG）系統**，支援音檔上傳、自動轉錄、向量化索引與語意問答，並透過 Celery 非同步處理長時間任務，具備可擴展的後端架構設計。
+這是一個簡易的 **語音轉文字 + 向量檢檢索增強生成（RAG）系統**，支援音檔上傳、自動轉錄、向量化索引與語意問答，並透過 Celery 非同步處理長時間任務，具備可擴展的後端架構設計。
 
 
 ## 🚀 Project Overview
@@ -9,19 +9,19 @@
 Speech-to-RAG Assistant 是一個端到端 AI Backend 系統，流程如下：
 ```text
 Audio Upload
-↓
+     ↓
 Celery Background Task
-↓
-Whisper Speech-to-Text
-↓
+     ↓
+Whisper Model (Speech-to-Text)
+     ↓
 Text Chunking
-↓
-Embedding (HuggingFace BGE)
-↓
+     ↓
+Embedding
+     ↓
 Chroma Vector Database
-↓
+     ↓
 RAG Retrieval + LLM (Ollama)
-↓
+     ↓
 Answer with Source Traceability
 ```
 
@@ -107,7 +107,7 @@ Answer with Source Traceability
 - ChromaDB (Vector Database)
 - SQLite (Task Status Tracking)
 
-### Async / Queue
+### Async / Queuet 
 - Celery
 - Redis
 
