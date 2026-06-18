@@ -3,11 +3,11 @@
 
 一個完整的 **語音轉文字 + 向量檢檢索增強生成（RAG）系統**，支援音檔上傳、自動轉錄、向量化索引與語意問答，並透過 Celery 非同步處理長時間任務，具備可擴展的後端架構設計。
 
----
 
 ## 🚀 Project Overview
 
 Speech-to-RAG Assistant 是一個端到端 AI Backend 系統，流程如下：
+```text
 Audio Upload
 ↓
 Celery Background Task
@@ -23,8 +23,8 @@ Chroma Vector Database
 RAG Retrieval + LLM (Ollama)
 ↓
 Answer with Source Traceability
+```
 
----
 
 ## 🧠 Key Features
 
@@ -53,31 +53,40 @@ Answer with Source Traceability
 
 ## 🏗 System Architecture
 ```text
-             ┌──────────────┐
-             │  FastAPI API │
-             └──────┬───────┘
-                    │
-    ┌───────────────┴───────────────┐
-    │                               │
-Upload Audio                    Ask Question
-│                               │
-▼                               ▼
-┌──────────────┐              ┌─────────────────┐
-│ Celery Task  │              │ RAG Pipeline     │
-│ (Whisper)    │              │ Retrieval        │
-└──────┬───────┘              └──────┬──────────┘
-│                             │
-▼                             ▼
-┌──────────────┐           ┌────────────────────┐
-│ Transcripts  │           │ Chroma Vector DB   │
-└──────┬───────┘           └─────────┬──────────┘
-│                             │
-▼                             ▼
-Chunking                 Ollama LLM (Qwen)
-│                             │
-└──────────────┬──────────────┘
-▼
-Final Answer
+
+               ┌──────────────┐
+               │ FastAPI API  │
+               └──────┬───────┘
+                      │
+       ┌──────────────┴──────────────┐
+       │                             │
+  Upload Audio                   Ask Question
+       │                             │
+       ▼                             ▼
+┌──────────────┐              ┌────────────────┐
+│ Celery Task  │              │  RAG Pipeline  │
+│  (Whisper)   │              │   Retrieval    │
+└──────┬───────┘              └──────┬─────────┘
+       │                             │
+       ▼                             │
+┌──────────────┐                     │
+│ Transcripts  │                     │
+└──────┬───────┘                     │
+       │                             │
+       ▼                             │
+    Chunking                         ▼
+       │                    ┌────────────────────┐
+       ▼                    │                    │
+    Embedding ─────────────►│  Chroma Vector DB  │
+                            │                    │
+                            └────────┬───────────┘
+                                     │
+                                     ▼
+                             Ollama LLM (Qwen)
+                                     │
+                                     ▼
+                                Final Answer
+```
 
 ---
 
@@ -145,6 +154,7 @@ speech-rag/
 ├── requirements.txt                # 專案 Python 套件依賴清單
 ├── .env                            # 環境變數私密設定檔
 └── .env.example                    # 環境變數範例檔
+```
 
 ---
 
@@ -166,6 +176,7 @@ Response:
   "status": "processing"
 }
 ```
+
 ### 📊 Check Processing Status
 
 ```http
@@ -236,22 +247,24 @@ docker-compose up -d --build
 - Celery Worker: 背景音訊非同步處理行程
 - Ollama (LLM): 透過 host.docker.internal 通道安全串接本地既有 Ollama，共享模型記憶體。
 
---- 
+
 
 ## 🔄 Celery Workflow
+```text
 Upload Audio
-↓
+      ↓
 FastAPI stores file
-↓
+      ↓
 Celery task triggered
-↓
+      ↓
 Whisper transcription
-↓
+      ↓
 Chunking + Embedding
-↓
+      ↓
 Store into ChromaDB
-↓
+      ↓
 Update SQLite status
+```
 
 ---
 
@@ -267,7 +280,6 @@ Update SQLite status
     - 實作 Python 動態檔案系統掃描技術，解決 Celery 自動註冊任務時的常規路徑問題。
 - 來源可追溯性：LLM 回應內容均附帶原始資料區塊來源，具備商業落地價值。
 
----
 
 ## 🚀 Future Improvements
 - 增加多用戶身分驗證與權限控管 (JWT / OAuth2)
