@@ -2,13 +2,14 @@ import os
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_chroma import Chroma
 from langchain_community.llms import Ollama
+from app.config import settings
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 DB_PATH = os.path.join(BASE_DIR, "chroma_langchain_db")
 
 
 embeddings = HuggingFaceEmbeddings(
-    model_name="BAAI/bge-small-zh-v1.5"
+    model_name=settings.EMBEDDING_MODEL
 )
 
 vector_store = Chroma(
@@ -18,7 +19,7 @@ vector_store = Chroma(
 )
 
 llm = Ollama(
-    model="qwen2.5:1.5b",   # Qwen2.5-1.5B (900MB，1.5G記憶體) 
+    model=settings.OLLAMA_MODEL,
     base_url="http://ollama:11434"
     )
 

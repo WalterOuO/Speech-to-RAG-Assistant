@@ -4,10 +4,10 @@ from fastapi import UploadFile, HTTPException
 from app.tasks.speech_tasks import process_audio_task
 from app.db.status_db import update_status
 from app.db.chroma_client import get_vector_store
+from app.config import settings
 
-
-UPLOAD_AUDIO_DIR = "./uploaded_audio"
-TRANSCRIPT_DIR = "./transcripts"
+UPLOAD_AUDIO_DIR = settings.UPLOAD_AUDIO_DIR
+TRANSCRIPT_DIR = settings.TRANSCRIPT_DIR
 
 os.makedirs(UPLOAD_AUDIO_DIR, exist_ok=True)
 os.makedirs(TRANSCRIPT_DIR, exist_ok=True)

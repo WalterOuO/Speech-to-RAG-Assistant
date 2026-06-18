@@ -1,7 +1,8 @@
 import sqlite3
 import os
+from app.config import settings
 
-DB_PATH = "./file_status_db/transcripts_status.db"
+DB_PATH = settings.DB_PATH
 
 def init_db():
     """初始化資料庫，建立狀態表"""
