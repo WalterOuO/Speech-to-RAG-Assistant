@@ -152,7 +152,6 @@ speech-rag/
 ├── Dockerfile                      # 用於打包 FastAPI 與 Celery Worker 的多功能環境映像檔定義
 ├── docker-compose.yml              # 系統多容器編排設定檔 (Web, Worker, Redis, 外部共用 Ollama 通道)
 ├── requirements.txt                # 專案 Python 套件依賴清單
-├── .env                            # 環境變數私密設定檔
 └── .env.example                    # 環境變數範例檔
 ```
 
