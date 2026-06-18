@@ -12,10 +12,10 @@ from app.db.chroma_client import (
 vector_store = get_vector_store()
 llm = get_llm()
 
-def ask_question(filename, question):
+def ask_question(filename, question, top_k=4):
     relevant_docs = vector_store.similarity_search(
         question,
-        k=4,
+        k=top_k,
         filter={"source_file": filename}
     )
                             
@@ -24,8 +24,16 @@ def ask_question(filename, question):
                 "question": question,
                 "answer": "在該文件中找不到相關參考資料。"
                 }
-
-    context = "\n\n".join([doc.page_content for doc in relevant_docs])
+    
+    context = ""
+    sources = []
+    for idx, doc in enumerate(relevant_docs):
+        context += f"\n[Chunk {idx+1}]\n{doc.page_content}\n"
+    
+        sources.append({
+            "filename": doc.metadata.get("source_audio"),
+            "chunk": idx + 1
+        })
 
     prompt = build_prompt(context, question)
 
@@ -34,7 +42,8 @@ def ask_question(filename, question):
         return {
             "filename": filename,
             "question": question,
-            "answer": answer
+            "answer": answer,
+            "sources": sources
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Ollama 呼叫失敗: {str(e)}")

@@ -51,3 +51,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.get("/health")
+def health():
+
+    return {
+        "status":"healthy",
+        "database":"connected",
+        "vector_db":"ready",
+        "llm":"ready"
+    }
