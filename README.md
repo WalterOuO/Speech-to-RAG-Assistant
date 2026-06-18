@@ -28,23 +28,23 @@ Answer with Source Traceability
 
 ## 🧠 Key Features
 
-### 🎙 Speech Processing
+### Speech Processing
 - 支援 `.wav / .mp3 / .m4a` 音檔上傳
 - 使用 OpenAI Whisper 自動語音轉文字
 - 非同步背景處理（Celery + Redis）
 
-### 📚 RAG Question Answering
+### RAG Question Answering
 - 基於 ChromaDB 向量資料庫
 - 使用 HuggingFace BGE embedding
 - 支援語意搜尋 + context augmentation
 - 使用 Ollama (Qwen2.5) 本地推論
 
-### ⚡ Async System Design
+### Async System Design
 - Celery background workers
 - Redis message broker
 - 任務狀態追蹤（SQLite）
 
-### 📊 System Observability
+### System Observability
 - Audio processing status tracking
 - Logging system (INFO / ERROR)
 - Health check endpoint
@@ -160,7 +160,7 @@ speech-rag/
 
 ## 🔌 API Documentation
 
-### 🎙 Upload Audio
+### Upload Audio
 
 ```http
 POST /speech/upload
@@ -177,7 +177,7 @@ Response:
 }
 ```
 
-### 📊 Check Processing Status
+### Check Processing Status
 
 ```http
 GET /speech/status/{filename}
@@ -191,7 +191,7 @@ Response:
 }
 ```
 
-### ❓ Ask Question (RAG)
+### Ask Question (RAG)
 ```http
 POST /rag/ask
 ```
