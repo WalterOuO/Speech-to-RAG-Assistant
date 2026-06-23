@@ -164,9 +164,12 @@ speech-rag/
 ```http
 POST /speech/upload
 ```
+
 Request:
+```text
 form-data:
 file: audio file (.wav, .mp3, .m4a)
+```
 
 Response:
 ```json
