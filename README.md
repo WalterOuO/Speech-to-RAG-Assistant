@@ -4,7 +4,7 @@
 這是一個簡易的 **語音轉文字 + 向量檢檢索增強生成（RAG）系統**，支援音檔上傳、自動轉錄、向量化索引與語意問答，並透過 Celery 非同步處理長時間任務，具備可擴展的後端架構設計。
 
 
-## 🚀 Project Overview
+##  Project Overview
 
 Speech-to-RAG Assistant 是一個端到端 AI Backend 系統，流程如下：
 ```text
@@ -26,7 +26,7 @@ Answer with Source Traceability
 ```
 
 
-## 🧠 Key Features
+##  Key Features
 
 ### Speech Processing
 - 支援 `.wav / .mp3 / .m4a` 音檔上傳
@@ -51,7 +51,7 @@ Answer with Source Traceability
 
 ---
 
-## 🏗 System Architecture
+##  System Architecture
 ```text
 
                ┌──────────────┐
@@ -90,7 +90,7 @@ Answer with Source Traceability
 
 ---
 
-## 🧱 Tech Stack
+##  Tech Stack
 
 ### Backend
 - FastAPI
@@ -117,7 +117,7 @@ Answer with Source Traceability
 
 ---
 
-## 📁 Project Structure
+##  Project Structure
 ```text
 speech-rag/
 │
@@ -157,7 +157,7 @@ speech-rag/
 
 ---
 
-## 🔌 API Documentation
+##  API Documentation
 
 ### Upload Audio
 
@@ -227,7 +227,7 @@ Response:
 
 ---
 
-## ⚙️ Environment Variables
+##  Environment Variables
 
 本專案透過 app/config.py 的 Pydantic 進行環境變數檢驗。請複製 .env.example 並重新命名為 .env，設定以下變數：
 ```code
@@ -238,7 +238,7 @@ LANGSMITH_API_KEY=YOUR_LANGSMITH_API_KEY
 ```
 
 
-## 🐳 Run with Docker
+##  Run with Docker
 
 ```bash
 docker-compose up -d --build
@@ -251,7 +251,7 @@ docker-compose up -d --build
 
 
 
-## 🔄 Celery Workflow
+##  Celery Workflow
 ```text
 Upload Audio
       ↓
@@ -270,7 +270,7 @@ Update SQLite status
 
 ---
 
-## 📌 Highlights
+##  Highlights
 
 - 完整端到端 AI 系統：成功整合語音轉文字（STT）與檢索增強生成（RAG）兩大核心 Pipeline。
 - 非同步高效能架構：採用 FastAPI + Celery + Redis 生態系，將密集型運算（Whisper / Embedding）與 API 主行程解耦。
@@ -283,7 +283,7 @@ Update SQLite status
 - 來源可追溯性：LLM 回應內容均附帶原始資料區塊來源，具備商業落地價值。
 
 
-## 🚀 Future Improvements
+##  Future Improvements
 - 增加多用戶身分驗證與權限控管 (JWT / OAuth2)
 - 將輕量型 SQLite 升級為生產環境級的 PostgreSQL 資料庫
 - 打造前端互動式儀表板介面 (React / Next.js)
