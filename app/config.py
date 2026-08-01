@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     TRANSCRIPT_DIR: str = "./transcripts"
     DB_PATH: str = "./file_status_db/transcripts_status.db"
     EMBEDDING_MODEL: str = "BAAI/bge-small-zh-v1.5"
-    OLLAMA_MODEL: str = "qwen2.5:1.5b"
+    OLLAMA_MODEL: str = "llama3.2"
     RERANKER_MODEL: str = "BAAI/bge-reranker-base"
     WHISPER_MODEL: str = "base"
     
