@@ -1,4 +1,4 @@
-from fastapi import APIRouter, UploadFile, File, status
+from fastapi import APIRouter
 from app.models import schemas
 from app.services.rag_service import ask_question
 
@@ -11,4 +11,4 @@ router = APIRouter(
 
 @router.post("/ask", response_model=schemas.QueryResponse)
 def ask(request: schemas.QueryRequest):
-    return ask_question(request.filename, request.question)
+    return ask_question(request.question)

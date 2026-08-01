@@ -10,16 +10,13 @@ class AudioStatusResponse(BaseModel):
     status: str
 
 class QueryRequest(BaseModel):
-    filename: str
     question: str
-    top_k: int
     
 class Source(BaseModel):
     filename: str
     chunk: int
     
 class QueryResponse(BaseModel):
-    filename: str
     question: str
     answer: str
     sources: list[Source]

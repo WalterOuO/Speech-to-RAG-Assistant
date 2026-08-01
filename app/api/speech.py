@@ -1,4 +1,4 @@
-from fastapi import APIRouter, UploadFile, File, status
+from fastapi import APIRouter, UploadFile, File, status, HTTPException
 from app.models.schemas import AudioUploadResponse, AudioStatusResponse
 from app.services.speech_service import upload_audio
 from app.db.status_db import get_status

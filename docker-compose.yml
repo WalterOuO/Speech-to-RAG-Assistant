@@ -1,4 +1,4 @@
-version: '3.8'
+# version: '3.8'
 
 services:
   # 若別的專案已開啟 Ollama 服務，就不須重複開啟 (會擠 Ollama 11434 port)，獨立執行時再 compose 就好
@@ -45,6 +45,7 @@ services:
     environment:                                # 環境給 Docker 執行的, 由 Docker中的 redis://redis 對接
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_BACKEND_URL=redis://redis:6379/0
+      - HF_TOKEN=${HF_TOKEN}
       # 若 Docker中別的專案已開啟 Ollama 服務，使用 host.docker.internal 來訪問主機上的 Ollama
       - OLLAMA_HOST=http://host.docker.internal:11434
     extra_hosts:
@@ -54,6 +55,7 @@ services:
       - ./chroma_langchain_db:/app/chroma_langchain_db
       - ./file_status_db:/app/file_status_db
       - ./transcripts:/app/transcripts
+      - hf_cache:/root/.cache/huggingface
     depends_on:
       # ollama:
       #   condition: service_healthy
@@ -76,6 +78,7 @@ services:
     environment:
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_BACKEND_URL=redis://redis:6379/0
+      - HF_TOKEN=${HF_TOKEN}
       - OLLAMA_HOST=http://host.docker.internal:11434
     extra_hosts:
       - "host.docker.internal:host-gateway"
@@ -84,6 +87,7 @@ services:
       - ./chroma_langchain_db:/app/chroma_langchain_db
       - ./file_status_db:/app/file_status_db
       - ./transcripts:/app/transcripts
+      - hf_cache:/root/.cache/huggingface
     depends_on:
       # ollama:
       #   condition: service_healthy
@@ -97,3 +101,4 @@ services:
 
 volumes:
   ollama_data:
+  hf_cache:
