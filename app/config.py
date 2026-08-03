@@ -3,8 +3,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    CELERY_BROKER_URL: str
-    CELERY_BACKEND_URL: str
+    CELERY_BROKER_URL: str = "redis://localhost:6379/0"
+    CELERY_BACKEND_URL: str = "redis://localhost:6379/0"
     
     UPLOAD_AUDIO_DIR: str = "./uploaded_audio"
     TRANSCRIPT_DIR: str = "./transcripts"
