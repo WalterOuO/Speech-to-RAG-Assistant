@@ -1,0 +1,87 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-asyncio httpx pytest-cov
+
+      - name: Static Analysis (Linting)
+        run: |
+          # Basic check for syntax errors using python's compileall
+          python -m compileall .
+
+      - name: Run Tests
+        run: |
+          python -m pytest tests/ --cov=app
+
+  docker-build:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: false # Set to true and add registry auth if pushing to DockerHub/GHCR
+          tags: speech-rag:latest
+          load: true # Load image back into local docker daemon for verification
+
+  deploy:
+    # This job is a template for CD.
+    # Since the project uses docker-compose for self-hosting,
+    # the actual deployment usually happens via SSH or a CD agent on the target server.
+    needs: docker-build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deployment Notification
+        run: echo "Build and Test successful. Image is ready for deployment via docker-compose."
+      # Example SSH deployment (commented out):
+      # - name: Deploy via SSH
+      #   uses: appleboy/ssh-action@master
+      #   with:
+      #     host: ${{ secrets.HOST }}
+      #     username: ${{ secrets.USERNAME }}
+      #     key: ${{ secrets.SSH_KEY }}
+      #     script: |
+      #       cd /path/to/speech-rag
+      #       git pull origin main
+      #       docker compose up -d --build

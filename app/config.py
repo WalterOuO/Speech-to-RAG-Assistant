@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     OLLAMA_MODEL: str = "llama3:latest"
     RERANKER_MODEL: str = "BAAI/bge-reranker-base"
     WHISPER_MODEL: str = "base"
+    STREAMLIT_BACKEND_URL: str = "http://localhost:8002"  
     
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 

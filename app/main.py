@@ -12,6 +12,8 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+system_status: list[str] = []
+
 
 from app.db.status_db import init_db
 
@@ -21,11 +23,18 @@ load_dotenv()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """FastAPI 生命週期管理器"""
-    logger.info("👉 系統啟動中：正在初始化 SQLite 狀態資料庫...")
+    msg1 = "👉 系統啟動中：正在初始化 SQLite 狀態資料庫..."
+    logger.info(msg1)
+    system_status.append(msg1)
     init_db()
-    logger.info("🔹 SQLite 狀態資料庫初始化成功！")
 
-    logger.info("👉 系統啟動中：正在載入 RAG 向量資料庫與 LLM 模型權重，請稍候...")
+    msg2 = "🔹 SQLite 狀態資料庫初始化成功！"
+    logger.info(msg2)
+    system_status.append(msg2)
+
+    msg3 = "👉 系統啟動中：正在載入 RAG 向量資料庫與 LLM 模型權重，請稍候..."
+    logger.info(msg3)
+    system_status.append(msg3)
 
     # 延遲引入，確保載入時能被 lifespan 控管
     from app.api import rag, speech
@@ -34,7 +43,9 @@ async def lifespan(app: FastAPI):
     app.include_router(speech.router)
     app.include_router(rag.router)
 
-    logger.info("✨ LLM 與向量資料庫載入完成！後端服務正式對外開放！")
+    msg4 = "✨ LLM 與向量資料庫載入完成！後端服務正式對外開放！"
+    logger.info(msg4)
+    system_status.append(msg4)
     yield
 
 app = FastAPI(title="Speech-to-RAG Assistant", lifespan=lifespan)
@@ -59,4 +70,12 @@ def health():
         "database":"connected",
         "vector_db":"ready",
         "llm":"ready"
+    }
+
+@app.get("/status")
+def get_system_status():
+    ready = len(system_status) > 0 and system_status[-1] == "✨ LLM 與向量資料庫載入完成！後端服務正式對外開放！"
+    return {
+        "messages": system_status,
+        "ready": ready
     }
