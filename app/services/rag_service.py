@@ -27,14 +27,18 @@ def build_hybrid_retriever():
     # 1. Dense Vector Retriever
     vector_retriever = vector_store.as_retriever(
         search_type="similarity",
-        search_kwargs={
-            "k": 20
-        }
+        search_kwargs={"k": 20}
     )
 
     # get all documents and their metadata from the vector store
     data = vector_store.get(include=["documents", "metadatas"])
 
+    raw_docs = data.get("documents") or []
+    raw_metas = data.get("metadatas") or []
+
+    if not raw_docs:
+        return vector_retriever
+    
     documents = []
 
     for content, metadata in zip(data["documents"], data["metadatas"]):
@@ -47,27 +51,15 @@ def build_hybrid_retriever():
 
     # 2. BM25 Retriever
     bm25_retriever = BM25Retriever.from_documents(documents)
-    
     bm25_retriever.k = 20
 
     # Hybrid Search
     hybrid_retriever = EnsembleRetriever(
-        retrievers=[
-            bm25_retriever,
-            vector_retriever
-        ],
-        weights=[
-            0.5,
-            0.5
-        ]
-    )
+        retrievers=[bm25_retriever, vector_retriever],
+        weights=[0.5, 0.5]
+        )
 
     return hybrid_retriever
-
-
-# Create Hybrid Retriever
-hybrid_retriever = build_hybrid_retriever()
-
 
 
 def rerank_documents(question, documents, top_k=5):
@@ -96,6 +88,7 @@ def rerank_documents(question, documents, top_k=5):
 
 
 def ask_question(question):
+    hybrid_retriever = build_hybrid_retriever()
     hybrid_docs = hybrid_retriever.invoke(question)
                             
     if not hybrid_docs:

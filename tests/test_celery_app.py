@@ -2,7 +2,7 @@ import pytest
 from app.celery_app import celery
 
 def test_celery_config():
-    assert celery.main.name == "speech_tasks"
+    assert celery.main == "speech_tasks"
     # Check if tasks are registered (should include speech_tasks)
     registered_tasks = celery.tasks.keys()
     assert any("speech_tasks" in t or "process_audio_task" in t for t in registered_tasks)

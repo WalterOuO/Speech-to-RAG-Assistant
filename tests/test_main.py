@@ -11,4 +11,4 @@ def test_main_health(client):
 def test_main_cors(client):
     # Test CORS header
     res = client.options("/health", headers={"Origin": "http://localhost:3000"})
-    assert res.headers.get("access-control-allow-origin") == "*"
+    assert res.headers.get("access-control-allow-origin") == "http://localhost:3000"

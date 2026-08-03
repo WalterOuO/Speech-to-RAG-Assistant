@@ -17,19 +17,25 @@ def test_rerank_documents_sorting():
         assert len(result) == 2
 
 def test_ask_question_no_docs():
-    with patch("app.services.rag_service.hybrid_retriever") as mock_retriever:
+    with patch("app.services.rag_service.build_hybrid_retriever") as mock_build_retriever:
+        mock_retriever = MagicMock()
         mock_retriever.invoke.return_value = []
+        mock_build_retriever.return_value = mock_retriever
+        
         res = rag_service.ask_question("Any question?")
         assert res["answer"] == "在該文件中找不到相關參考資料。"
         assert res["sources"] == []
 
 def test_ask_question_success():
     docs = [Document(page_content="The capital of France is Paris", metadata={"source": "geo.wav"})]
-    with patch("app.services.rag_service.hybrid_retriever") as mock_retriever, \
+    with patch("app.services.rag_service.build_hybrid_retriever") as mock_build_retriever, \
          patch("app.services.rag_service.rerank_documents") as mock_rerank, \
          patch("app.services.rag_service.llm") as mock_llm:
 
+        mock_retriever = MagicMock()
         mock_retriever.invoke.return_value = docs
+        mock_build_retriever.return_value = mock_retriever
+
         mock_rerank.return_value = docs
         mock_llm.invoke.return_value = "Paris is the capital."
 
@@ -39,11 +45,14 @@ def test_ask_question_success():
 
 def test_ask_question_llm_error():
     docs = [Document(page_content="Some text")]
-    with patch("app.services.rag_service.hybrid_retriever") as mock_retriever, \
+    with patch("app.services.rag_service.build_hybrid_retriever") as mock_build_retriever, \
          patch("app.services.rag_service.rerank_documents") as mock_rerank, \
          patch("app.services.rag_service.llm") as mock_llm:
 
+        mock_retriever = MagicMock()
         mock_retriever.invoke.return_value = docs
+        mock_build_retriever.return_value = mock_retriever
+
         mock_rerank.return_value = docs
         mock_llm.invoke.side_effect = Exception("Ollama Down")
 
