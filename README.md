@@ -31,9 +31,9 @@ The system is orchestrated via Docker Compose, utilizing a decoupled, event-driv
                          │  Streamlit Frontend   │
                          │        :8501          │
                          └───────────┬───────────┘
-                                     │ HTTP REST
+                                     │ 
+                                     │  HTTP REST
                                      ▼
-
                          ┌───────────────────────┐
                          │   FastAPI Backend     │
                          │        :8002          │
