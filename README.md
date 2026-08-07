@@ -27,33 +27,47 @@ The system is orchestrated via Docker Compose, utilizing a decoupled, event-driv
 
 ### Infrastructure Diagram
 ```text
-                                 ┌──────────────────────────┐
-                                 │  Streamlit Frontend (8501)│
-                                 └─────────────┬────────────┘
-                                               │ (HTTP REST)
-                                               ▼
-                                 ┌──────────────────────────┐
-                                 │     FastAPI Backend (8002)│
-                                 └──────┬──────────────┬────┘
-                                        │              │
-                ┌───────────────────────┴┐              │ (Direct Query)
-                │ (Task Dispatch)       ▼              ▼
-        ┌───────┴──────────┐    ┌────────────────────────────┐
-        │   Redis Broker   │──► │      Celery Worker        │
-        └──────────────────┘    │ (Whisper + Embedding + DB) │
-                                └──────────────┬─────────────┘
-                                               │
-                                               ▼
-                                 ┌──────────────────────────┐
-                                 │     Chroma Vector DB      │
-                                 │      & SQLite Status     │
-                                 └──────────────┬───────────┘
-                                               │
-                                               ▼
-                                 ┌──────────────────────────┐
-                                 │   Ollama LLM (Llama 3)   │
-                                 │    (via host.docker.internal)│
-                                 └──────────────────────────┘
+                         ┌───────────────────────┐
+                         │  Streamlit Frontend   │
+                         │        :8501          │
+                         └───────────┬───────────┘
+                                     │ HTTP REST
+                                     ▼
+
+                         ┌───────────────────────┐
+                         │   FastAPI Backend     │
+                         │        :8002          │
+                         └───────────┬───────────┘
+                                     │
+                      ┌──────────────┴──────────────┐
+                      │                             │
+                      ▼                             ▼
+
+             ┌─────────────────┐          ┌──────────────────┐
+             │ Upload Pipeline │          │   RAG Pipeline   │
+             └────────┬────────┘          └────────┬─────────┘
+                      │                            │
+                      ▼                            ▼
+               ┌─────────────┐            ┌─────────────────┐
+               │ Redis Broker│            │  Hybrid Search  │
+               └──────┬──────┘            │  (Dense + BM25) │
+                      │                   └────────┬────────┘
+                      ▼                            ▼
+               ┌─────────────┐            ┌─────────────────┐
+               │ CeleryWorker│            │    Reranker     │
+               │   Whispe    │            └────────┬────────┘
+               │  Embedding  │                     │
+               └──────┬──────┘                     ▼
+                      │                   ┌─────────────────┐
+                      ▼                   │   Ollama LLM    │
+               ┌─────────────┐            └─────────────────┘
+               │  Vector DB  │
+               │   Chroma    │
+               └─────────────┘
+
+
+               SQLite Status DB
+            (Task Status Tracking)
 ```
 
 ### The RAG Pipeline: Engineering Depth
