@@ -1,291 +1,178 @@
-# Speech-to-RAG Assistant  
-### (FastAPI + Whisper + RAG + Celery + Redis + ChromaDB + Ollama)
+# Speech-to-RAG Assistant
 
-這是一個簡易的 **語音轉文字 + 向量檢檢索增強生成（RAG）系統**，支援音檔上傳、自動轉錄、向量化索引與語意問答，並透過 Celery 非同步處理長時間任務，具備可擴展的後端架構設計。
+An end-to-end AI pipeline that transforms spoken audio into a searchable knowledge base with grounded, traceable Q&A capabilities.
 
+## 🚀 Project Overview
 
-##  Project Overview
+The **Speech-to-RAG Assistant** is a high-production grade backend system designed to handle the full lifecycle of audio-based knowledge extraction: from raw audio upload to a high-precision Retrieval-Augmented Generation (RAG) interface.
 
-Speech-to-RAG Assistant 是一個端到端 AI Backend 系統，流程如下：
+### High-Level Data Flow
 ```text
-Audio Upload
-     ↓
-Celery Background Task
-     ↓
-Whisper Model (Speech-to-Text)
-     ↓
-Text Chunking
-     ↓
-Embedding
-     ↓
-Chroma Vector Database
-     ↓
-RAG Retrieval + LLM (Ollama)
-     ↓
-Answer with Source Traceability
-```
-
-
-##  Key Features
-
-### Speech Processing
-- 支援 `.wav / .mp3 / .m4a` 音檔上傳
-- 使用 OpenAI Whisper 自動語音轉文字
-- 非同步背景處理（Celery + Redis）
-
-### RAG Question Answering
-- 基於 ChromaDB 向量資料庫
-- 使用 HuggingFace BGE embedding
-- 支援語意搜尋 + context augmentation
-- 使用 Ollama (Qwen2.5) 本地推論
-
-### Async System Design
-- Celery background workers
-- Redis message broker
-- 任務狀態追蹤（SQLite）
-
-### System Observability
-- Audio processing status tracking
-- Logging system (INFO / ERROR)
-- Health check endpoint
-
----
-
-##  System Architecture
-```text
-
-               ┌──────────────┐
-               │ FastAPI API  │
-               └──────┬───────┘
-                      │
-       ┌──────────────┴──────────────┐
-       │                             │
-  Upload Audio                   Ask Question
-       │                             │
-       ▼                             ▼
-┌──────────────┐              ┌────────────────┐
-│ Celery Task  │              │  RAG Pipeline  │
-│  (Whisper)   │              │   Retrieval    │
-└──────┬───────┘              └──────┬─────────┘
-       │                             │
-       ▼                             │
-┌──────────────┐                     │
-│ Transcripts  │                     │
-└──────┬───────┘                     │
-       │                             │
-       ▼                             │
-    Chunking                         ▼
-       │                    ┌────────────────────┐
-       ▼                    │                    │
-    Embedding ─────────────►│  Chroma Vector DB  │
-                            │                    │
-                            └────────┬───────────┘
-                                     │
-                                     ▼
-                             Ollama LLM (Qwen)
-                                     │
-                                     ▼
-                                Final Answer
+[Audio Upload] 
+       ↓
+[Celery Background Task] → [OpenAI Whisper] → [Text Transcription]
+       ↓
+[Recursive Text Chunking] → [BGE Embedding] → [Chroma Vector DB]
+       ↓
+[User Query] → [Hybrid Search] → [CrossEncoder Reranking] → [Ollama LLM]
+       ↓
+[Grounded Answer with Source Traceability]
 ```
 
 ---
 
-##  Tech Stack
+## 🏗️ System Architecture
 
-### Backend
-- FastAPI
-- Pydantic
-- Uvicorn
+The system is orchestrated via Docker Compose, utilizing a decoupled, event-driven architecture to ensure that computationally expensive AI tasks do not block the API responsiveness.
 
-### AI / ML
-- Whisper (Speech-to-Text)
-- HuggingFace Transformers (BGE Embedding)
-- Ollama (Qwen2.5 LLM)
-- LangChain (Text Splitting + Vector Store)
+### Infrastructure Diagram
+```text
+                                 ┌──────────────────────────┐
+                                 │  Streamlit Frontend (8501)│
+                                 └─────────────┬────────────┘
+                                               │ (HTTP REST)
+                                               ▼
+                                 ┌──────────────────────────┐
+                                 │     FastAPI Backend (8002)│
+                                 └──────┬──────────────┬────┘
+                                        │              │
+                ┌───────────────────────┴┐              │ (Direct Query)
+                │ (Task Dispatch)       ▼              ▼
+        ┌───────┴──────────┐    ┌────────────────────────────┐
+        │   Redis Broker   │──► │      Celery Worker        │
+        └──────────────────┘    │ (Whisper + Embedding + DB) │
+                                └──────────────┬─────────────┘
+                                               │
+                                               ▼
+                                 ┌──────────────────────────┐
+                                 │     Chroma Vector DB      │
+                                 │      & SQLite Status     │
+                                 └──────────────┬───────────┘
+                                               │
+                                               ▼
+                                 ┌──────────────────────────┐
+                                 │   Ollama LLM (Llama 3)   │
+                                 │    (via host.docker.internal)│
+                                 └──────────────────────────┘
+```
 
-### DataBase
-- ChromaDB (Vector Database)
-- SQLite (Task Status Tracking)
+### The RAG Pipeline: Engineering Depth
+To solve the "lost in the middle" problem and ensure high precision, the system implements a multi-stage retrieval strategy:
 
-### Async / Queuet 
-- Celery
-- Redis
-
-### DevOps
-- Docker
-- Docker Compose
+1.  **Hybrid Search (Ensemble Retrieval):**
+    *   **Dense Vector Search:** Captures semantic meaning using `BAAI/bge-small-zh-v1.5`.
+    *   **BM25 Keyword Search:** Ensures exact term matching for technical jargon or specific names.
+    *   **Fusion:** Combines both using an `EnsembleRetriever` with a 50/50 weight distribution, retrieving the top 20 candidates.
+2.  **Cross-Encoder Reranking:**
+    *   The top 20 candidates are passed through a `CrossEncoder` (`BAAI/bge-reranker-base`).
+    *   Unlike bi-encoders (vector search), the Cross-Encoder performs full-attention interaction between the query and each document, providing far more accurate relevance scores.
+    *   **Final Selection:** Only the top 5 reranked documents are passed to the LLM.
+3.  **Grounded Generation:**
+    *   A strict system prompt forces the LLM to answer **only** based on the provided context.
+    *   **Fallback:** If context is insufficient, the system returns a standardized "No answer found in document" message instead of hallucinating.
 
 ---
 
-##  Project Structure
+## ✨ Key Features
+
+### 🎙️ Speech Processing Pipeline
+*   **Asynchronous Processing:** Audio files (`.wav`, `.mp3`, `.m4a`) are processed in the background via Celery to prevent API timeouts.
+*   **Automatic Transcription:** Uses OpenAI Whisper for robust speech-to-text conversion.
+*   **Dynamic State Tracking:** Real-time task status (processing $\rightarrow$ completed/failed) is persisted in SQLite.
+
+### 🔍 Advanced RAG Interface
+*   **Source Traceability:** Every answer is linked to specific chunks and original filenames, allowing users to verify LLM claims.
+*   **Optimized Context Window:** Reranking ensures the LLM receives only the most relevant information, reducing noise and cost.
+
+### 💻 Interactive Frontend
+*   **Streamlit Dashboard:** A clean UI for file uploads, status monitoring, and an interactive chat interface.
+*   **Smart Filename Resolution:** Automatically handles extension matching (e.g., searching for "meeting" will check "meeting.wav", "meeting.mp3", etc.).
+*   **System Health Polling:** Frontend polls the `/status` endpoint to ensure the backend is fully loaded before allowing interaction.
+
+---
+
+## 🛠️ Tech Stack
+
+| Layer | Technology | Usage |
+| :--- | :--- | :--- |
+| **Backend** | FastAPI, Pydantic | High-performance REST API & data validation |
+| **Async** | Celery, Redis | Distributed task queue for AI workloads |
+| **AI/ML** | Whisper, BGE Embedding, CrossEncoder | STT, Vectorization, and Reranking |
+| **LLM** | Ollama (Llama 3) | Local LLM inference |
+| **Vector DB** | ChromaDB | Persistent vector storage and similarity search |
+| **Database** | SQLite | Task status tracking |
+| **Frontend** | Streamlit | Interactive User Interface |
+| **DevOps** | Docker, GitHub Actions | Containerization & CI/CD Pipeline |
+
+---
+
+## 🧪 Quality Assurance & CI/CD
+
+The project follows rigorous software engineering practices to ensure stability.
+
+### Test Suite
+*   **Comprehensive Coverage:** 31+ tests across 12 modules covering API endpoints, RAG logic, Celery tasks, and Config.
+*   **Advanced Mocking Strategy:** In `tests/conftest.py`, heavy AI models (Whisper, Chroma, LLM) are replaced with `MagicMock` during testing to ensure the suite runs in seconds without requiring a GPU.
+*   **Eager Execution:** Celery is configured in `task_always_eager` mode for tests, allowing asynchronous tasks to be tested synchronously.
+*   **Run Tests:** `pytest tests/ --cov=app`
+
+### CI/CD Pipeline
+Integrated via **GitHub Actions** (`.github/workflows/cicd.yml`):
+1.  **Build & Test:** Automatically triggers on push/PR. Spins up a Redis container, runs static analysis (`compileall`), and executes the full test suite with coverage reports.
+2.  **Docker Build:** Uses Docker Buildx to verify that the production image builds successfully.
+3.  **CD Template:** Ready for deployment via SSH or CD agents upon merging to `main`.
+
+---
+
+## 📁 Project Structure
+
 ```text
 speech-rag/
-│
-├── app/                            # 核心應用程式資料夾
-│   ├── api/                        # API 路由控制層 (Controller)
-│   │   ├── rag.py                  # 負責 RAG 問答、語意檢索的 API 端點
-│   │   └── speech.py               # 負責音檔上傳、狀態查詢的 API 端點
-│   │
-│   ├── db/                         # 資料庫連接與初始化 (Database Layer)
-│   │   ├── chroma_client.py        # ChromaDB 向量資料庫連線實例與配置
-│   │   └── status_db.py            # SQLite 任務狀態資料庫初始化與讀寫連線 (配置併發安全)
-│   │
-│   ├── models/                     # Pydantic 資料驗證與 Schema 定義
-│   │   └── schemas.py              # 定義 API 請求、回應的 Pydantic 模型
-│   │
-│   ├── services/                   # 核心業務邏輯層 (Service Layer)
-│   │   ├── rag_service.py          # 封裝 LangChain、檢索增強與 LLM 生成邏輯
-│   │   └── speech_service.py       # 處理檔案儲存與調用 Celery 背景任務邏輯
-│   │
-│   ├── tasks/                      # Celery 背景非同步任務定義
-│   │   └── speech_tasks.py         # 實作 Whisper 語音轉文字、文字切片與向量化儲存任務
-│   │
-│   ├── config.py                   # 環境配置管理
-│   ├── celery_app.py               # Celery 核心實例配置 (內建 Python 動態任務自動掃描註冊機制)
-│   └── main.py                     # FastAPI 進入點 (內建 Lifespan 延遲引入機制，優化開機下載模型體驗)
-│
-├── uploaded_audio/                 # [Bind Mount] 本機音檔上傳暫存目錄
-├── transcripts/                    # [Bind Mount] 本機轉錄純文字檔預留目錄
-├── file_status_db/                 # [Bind Mount] 本機 SQLite 資料庫儲存目錄 (transcripts_status.db)
-├── chroma_langchain_db/            # [Bind Mount] 本機 ChromaDB 向量資料庫持久化目錄
-│
-├── Dockerfile                      # 用於打包 FastAPI 與 Celery Worker 的多功能環境映像檔定義
-├── docker-compose.yml              # 系統多容器編排設定檔 (Web, Worker, Redis, 外部共用 Ollama 通道)
-├── requirements.txt                # 專案 Python 套件依賴清單
-└── .env.example                    # 環境變數範例檔
+├── .github/workflows/    # CI/CD Pipeline definitions
+├── app/
+│   ├── api/              # API Layer (RAG & Speech endpoints)
+│   ├── db/               # Database Clients (Chroma & SQLite)
+│   ├── models/           # Pydantic Schemas
+│   ├── services/         # Core Business Logic (RAG, Speech, Prompts)
+│   ├── tasks/            # Celery Background Tasks
+│   ├── config.py         # Pydantic BaseSettings (Env management)
+│   ├── celery_app.py     # Celery Configuration (Dynamic task discovery)
+│   └── main.py           # FastAPI Entry point (with Lifespan management)
+├── tests/                # Comprehensive Test Suite
+├── frontend.py           # Streamlit Interactive UI
+├── Dockerfile            # Multi-purpose AI environment image
+└── docker-compose.yml    # 5-Service Orchestration (Web, Worker, Redis, Frontend, Ollama)
 ```
 
 ---
 
-##  API Documentation
+## ⚙️ Installation & Setup
 
-### Upload Audio
-
-```http
-POST /speech/upload
-```
-
-Request:
-```text
-form-data:
-file: audio file (.wav, .mp3, .m4a)
-```
-
-Response:
-```json
-{
-  "filename": "meeting.wav",
-  "status": "processing"
-}
-```
-
-### Check Processing Status
-
-```http
-GET /speech/status/{filename}
-```
-
-Response:
-```json
-{
-  "filename": "meeting.wav",
-  "status": "completed"
-}
-```
-
-### Ask Question (RAG)
-```http
-POST /rag/ask
-```
-
-Request:
-```json
-{
-  "filename": "meeting.wav",
-  "question": "What is the main topic discussed?"
-}
-```
-
-Response:
-```json
-{
-  "filename": "meeting.wav",
-  "question": "What is the main topic discussed?",
-  "answer": "The main topic is ...",
-  "sources": [
-    {
-      "filename": "meeting.wav",
-      "chunk": 1
-    },
-    {
-      "filename": "meeting.wav",
-      "chunk": 2
-    }
-  ]
-}
-```
-
----
-
-##  Environment Variables
-
-本專案透過 app/config.py 的 Pydantic 進行環境變數檢驗。請複製 .env.example 並重新命名為 .env，設定以下變數：
-```code
+### Environment Variables
+Create a `.env` file based on `.env.example`:
+```env
 CELERY_BROKER_URL=redis://redis:6379/0
 CELERY_BACKEND_URL=redis://redis:6379/0
-LANGSMITH_TRACING=true
-LANGSMITH_API_KEY=YOUR_LANGSMITH_API_KEY
+OLLAMA_HOST=http://host.docker.internal:11434
+HF_TOKEN=your_huggingface_token
+STREAMLIT_BACKEND_URL=http://web:8002
 ```
 
-
-##  Run with Docker
-
+### Run with Docker
 ```bash
 docker-compose up -d --build
 ```
-服務分配：
-- FastAPI Backend: http://localhost:8002
-- Redis: 內部消息佇列服務（Port: 6379）
-- Celery Worker: 背景音訊非同步處理行程
-- Ollama (LLM): 透過 host.docker.internal 通道安全串接本地既有 Ollama，共享模型記憶體。
 
-
-
-##  Celery Workflow
-```text
-Upload Audio
-      ↓
-FastAPI stores file
-      ↓
-Celery task triggered
-      ↓
-Whisper transcription
-      ↓
-Chunking + Embedding
-      ↓
-Store into ChromaDB
-      ↓
-Update SQLite status
-```
+**Service Ports:**
+*   **Frontend:** `http://localhost:8501`
+*   **Backend API:** `http://localhost:8002`
 
 ---
 
-##  Highlights
+## 🌟 Engineering Highlights (Interview Points)
 
-- 完整端到端 AI 系統：成功整合語音轉文字（STT）與檢索增強生成（RAG）兩大核心 Pipeline。
-- 非同步高效能架構：採用 FastAPI + Celery + Redis 生態系，將密集型運算（Whisper / Embedding）與 API 主行程解耦。
-- 高維護性設定管理：導入 Pydantic BaseSettings 實作動態 Config 機制，具備 Windows 跨平台編碼相容性。
-- 極致化硬體優化：透過 Docker 進階網路配置實作容器與宿主機 Ollama 共用，節省 3.5G 記憶體開銷。
-- 系統強健性設計：
-    - 導入 FastAPI lifespan 延遲引入機制，確保模型與向量庫加載時的流量控制。
-    - 實作 SQLite timeout 併發鎖定機制，解決多容器 Process 同時寫入的數據併發衝突。
-    - 實作 Python 動態檔案系統掃描技術，解決 Celery 自動註冊任務時的常規路徑問題。
-- 來源可追溯性：LLM 回應內容均附帶原始資料區塊來源，具備商業落地價值。
-
-
-##  Future Improvements
-- 增加多用戶身分驗證與權限控管 (JWT / OAuth2)
-- 將輕量型 SQLite 升級為生產環境級的 PostgreSQL 資料庫
-- 打造前端互動式儀表板介面 (React / Next.js)
-- 支援音檔線上預覽與音訊波形視覺化 UI
-- 擴充多語系轉錄優化與跨語言問答對齊機制
+*   **Resource Optimization:** Implemented `host.docker.internal` networking to share a single Ollama instance across containers, saving ~3.5GB of VRAM.
+*   **Concurrency Handling:** Solved SQLite write-locks in a multi-process environment using a custom `timeout=20` connection strategy.
+*   **Boot-up UX:** Integrated FastAPI `lifespan` to handle lazy-loading of heavy ML models, providing a `/status` endpoint for the frontend to poll until the system is "Ready".
+*   **Extensibility:** Built a dynamic Celery task registration mechanism that automatically scans the `tasks/` directory, allowing new AI pipelines to be added without modifying core config.
+*   **Production-Ready RAG:** Moved beyond simple similarity search by implementing a **Hybrid $\rightarrow$ Rerank** pipeline, significantly increasing the Precision@K for complex queries.
