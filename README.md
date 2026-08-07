@@ -21,6 +21,20 @@ The **Speech-to-RAG Assistant** is a high-production grade backend system design
 
 ---
 
+## 🖥️ Demo Interface
+
+The Streamlit frontend provides an interactive interface for audio upload, 
+task status monitoring, and document-based question answering.
+
+Users can:
+- Upload audio files for automatic transcription and indexing.
+- Monitor background processing status through the dashboard.
+- Ask questions and receive grounded answers with source traceability.
+
+![Streamlit Frontend Demo](docs/images/streamlit_demo.png)
+
+---
+
 ## 🏗️ System Architecture
 
 The system is orchestrated via Docker Compose, utilizing a decoupled, event-driven architecture to ensure that computationally expensive AI tasks do not block the API responsiveness.
