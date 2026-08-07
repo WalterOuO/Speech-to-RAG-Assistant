@@ -195,7 +195,7 @@ docker-compose up -d --build
 
 ---
 
-## 🌟 Engineering Highlights (Interview Points)
+## 🌟 Engineering Highlights
 
 *   **Resource Optimization:** Implemented `host.docker.internal` networking to share a single Ollama instance across containers, saving ~3.5GB of VRAM.
 *   **Concurrency Handling:** Solved SQLite write-locks in a multi-process environment using a custom `timeout=20` connection strategy.
