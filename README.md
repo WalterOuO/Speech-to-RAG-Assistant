@@ -33,7 +33,6 @@ Users can:
 
 ![Streamlit Frontend Demo](docs/images/streamlit_demo.png)
 
----
 
 ## 🏗️ System Architecture
 
