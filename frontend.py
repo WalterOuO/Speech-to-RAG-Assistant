@@ -49,19 +49,19 @@ def wait_for_backend():
 def resolve_filename(raw_input):
     """
     檔名匹配邏輯：
-    1. 若輸入含副檔名 (.wav, .mp3, .mp4) -> 直接精確比對
-    2. 若不含副檔名 -> 依優先序 [wav, mp3, mp4] 嘗試匹配
+    1. 若輸入含副檔名 (.wav, .mp3, .m4a) -> 直接精確比對
+    2. 若不含副檔名 -> 依優先序 [wav, mp3, m4a] 嘗試匹配
     """
     raw = raw_input.strip()
     if not raw:
         return []
 
     ext = os.path.splitext(raw)[1].lower()
-    if ext in (".wav", ".mp3", ".mp4"):
+    if ext in (".wav", ".mp3", ".m4a"):
         return [raw]
 
-    # 優先順位: wav -> mp3 -> mp4
-    return [raw + ".wav", raw + ".mp3", raw + ".mp4"]
+    # 優先順位: wav -> mp3 -> m4a
+    return [raw + ".wav", raw + ".mp3", raw + ".m4a"]
 
 def main():
     # 初始化 Session State
