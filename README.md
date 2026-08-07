@@ -42,7 +42,6 @@ The system is orchestrated via Docker Compose, utilizing a decoupled, event-driv
                       ┌──────────────┴──────────────┐
                       │                             │
                       ▼                             ▼
-
              ┌─────────────────┐          ┌──────────────────┐
              │ Upload Pipeline │          │   RAG Pipeline   │
              └────────┬────────┘          └────────┬─────────┘
