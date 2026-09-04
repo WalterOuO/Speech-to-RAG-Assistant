@@ -132,7 +132,7 @@ To solve the "lost in the middle" problem and ensure high precision, the system 
 
 ---
 
-## 🧪 Quality Assurance & CI/CD
+## 🧪 Testing & CI/CD
 
 The project follows rigorous software engineering practices to ensure stability.
 
@@ -165,6 +165,10 @@ speech-rag/
 │   ├── celery_app.py     # Celery Configuration (Dynamic task discovery)
 │   └── main.py           # FastAPI Entry point (with Lifespan management)
 ├── tests/                # Comprehensive Test Suite
+├── uploaded_audio/       # Audio repository 
+├── langchain_chroma_db/  # Local vector database cache
+├── transcripts/          # Transcripts generated from Whisper STT service
+├── file_status_db/       # Audio processing status for asynchronous celery task
 ├── frontend.py           # Streamlit Interactive UI
 ├── Dockerfile            # Multi-purpose AI environment image
 └── docker-compose.yml    # 5-Service Orchestration (Web, Worker, Redis, Frontend, Ollama)
@@ -195,7 +199,7 @@ docker-compose up -d --build
 
 ---
 
-## 🌟 Engineering Highlights
+## 🌟 Highlights
 
 *   **Resource Optimization:** Implemented `host.docker.internal` networking to share a single Ollama instance across containers, saving ~3.5GB of VRAM.
 *   **Concurrency Handling:** Solved SQLite write-locks in a multi-process environment using a custom `timeout=20` connection strategy.
