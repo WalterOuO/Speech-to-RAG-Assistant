@@ -31,8 +31,6 @@ Users can:
 - Monitor background processing status through the dashboard.
 - Ask questions and receive grounded answers with source traceability.
 
-![Streamlit Frontend Demo](docs/images/streamlit_demo.png)
-
 
 ## 🏗️ System Architecture
 
