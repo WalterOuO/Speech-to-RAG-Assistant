@@ -40,7 +40,7 @@ def upload_audio(file: UploadFile):
     if len(existing_docs["ids"]) > 0:
         return {
             "filename": filename,
-            "status": "Audio already uploaded and indexed."
+            "status": "Audio already uploaded and indexed before."
         }
 
 

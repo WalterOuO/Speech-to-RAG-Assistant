@@ -4,5 +4,8 @@ chroma_langchain_db/**/*
 transcripts/**/*
 uploaded_audio/**/*
 file_status_db/**/*
-
+chunks.xlsx
+count.py
+outputchunk.py
+.claude
 !**/.gitkeep

@@ -109,13 +109,13 @@ def ask_question(question):
     context = ""
     sources = []
     for idx, doc in enumerate(relevant_docs):
-        context += f"\n[Chunk {idx+1}]\n{doc.page_content}\n"
+        chunk_id = doc.metadata.get("chunk_id")
+        context += f"\n[Chunk {chunk_id}]\n{doc.page_content}\n"
     
         sources.append({
             "filename": doc.metadata.get("source_audio") or
-                        doc.metadata.get("source_audio") or
                         doc.metadata.get("source"),
-            "chunk": idx + 1
+            "chunk": chunk_id
         })
 
     prompt = build_prompt(context, question)

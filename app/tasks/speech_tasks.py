@@ -30,8 +30,9 @@ def process_audio_task(audio_path: str, filename: str, transcript_path: str):
 
         chunks = splitter.split_documents(docs)
 
-        for chunk in chunks:
+        for i, chunk in enumerate(chunks):
             chunk.metadata["source_audio"] = filename
+            chunk.metadata["chunk_id"] = i
 
         vector_store.add_documents(chunks)
         
